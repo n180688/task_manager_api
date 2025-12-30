@@ -4,7 +4,10 @@ import Session from "./Session.js";
 import sequelize from "../config/db.js";
 
 User.hasMany(Task, {foreignKey: 'userId'});
-Task.belongsTo(User, {foreignKey: 'userId'});
+Task.belongsTo(User, {
+    foreignKey: 'userId',
+    onDelete: 'CASCADE'
+});
 
 User.hasMany(Session, {foreignKey: 'userId'});
 Session.belongsTo(User, {

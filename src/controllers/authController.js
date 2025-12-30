@@ -3,6 +3,7 @@ import Session from "../models/Session.js";
 import bcrypt from "bcrypt";
 import jwt from 'jsonwebtoken';
 import crypto from 'crypto';
+import { UniqueConstraintError, ValidationError } from "sequelize";
 
 const { JWT_ACCESS_SECRET, JWT_ACCESS_EXPIRES } = process.env;
 
@@ -16,16 +17,6 @@ async function register(req, res){
     try{
         const {login, password} = req.body;
 
-        if(!login || !password){
-            return res.status(400).json({message: 'Нужно имя и пароль'});
-        };
-
-        const exists = await User.findOne({ where: {login}});
-
-        if (exists) {
-            return res.status(400).json({message: 'Юзер уже существует'});
-        };
-
         const hash = await bcrypt.hash(password, 10);
 
         const user = await User.create({login, password: hash});
@@ -36,8 +27,23 @@ async function register(req, res){
         });
 
     } catch(err){
-        console.log(err);
-        return res.status(500).json({ message: 'Ошибка регистрации!'})
+
+        if (err instanceof UniqueConstraintError) {
+            return res.status(400).json({
+            error: 'LOGIN_EXISTS',
+            message: 'Login already taken'
+                });
+            }
+
+        if (err instanceof ValidationError) {
+            return res.status(400).json({
+            error: 'VALIDATION_ERROR',
+            message: err.errors[0].message
+                });
+            }
+
+        return res.status(500).json({ message: err.message });
+
     }
 }
 
