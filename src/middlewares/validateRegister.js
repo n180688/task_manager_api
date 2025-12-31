@@ -1,5 +1,22 @@
 function validateRegister(req, res, next) {
-  const { login, password } = req.body;
+  let { login, password } = req.body;
+
+  if(!login || !password){
+    return res.status(400).json({
+      error: 'INVALID_INPUT',
+      message: 'Login and password are required'
+    })
+  }
+
+  if(typeof login !== 'string' || typeof password !== 'string'){
+    return res.status(400).json({
+      error: 'INVALID_TYPE',
+      message: 'Invalid input format'
+    })
+  }
+
+  login = login.trim();
+  password = password.trim();
 
   if (login.length < 3 ||  login.length > 50) {
     return res.status(400).json({
