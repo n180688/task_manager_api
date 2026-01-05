@@ -1,5 +1,8 @@
 import { Router } from "express";
 import  Task  from "../models/Task.js";
+import { checkTaskOwner } from "../middlewares/checkTaskOwner.js";
+import { validateTaskCreate, validateTaskPatch } from "../middlewares/validateTask.js";
+
 
 const router = Router();
 
@@ -20,17 +23,10 @@ router.get('/', async(req, res)=>{
 
 
 //получение задачи по id 
-router.get('/:id', async(req, res)=>{
+router.get('/:id', checkTaskOwner, async(req, res)=>{
     try {
-        const userId = req.user.id;
-        const id = parseInt(req.params.id, 10);
-        const task = await Task.findByPk(id);
-        
-        if(!task) return res.status(404).json({ message: 'task not found'});
-
-        if(task.userId !== userId) return res.status(403).json({message: 'Нет доступа'});
+        const task = req.task;
         return res.json(task);
-
     } catch (err) {
         return res.status(500).json({message: 'Ошибка'})
     }
@@ -38,19 +34,20 @@ router.get('/:id', async(req, res)=>{
 
 
 //создание нового 
-router.post('/', async (req, res)=>{
+router.post('/', validateTaskCreate, async (req, res)=>{
     try {
         const userId = req.user.id;
-        const {title, content,deadline } = req.body;
-        if(!title || title.trim() === '') return res.status(400).json({message: 'Нужен title'});
+        const {title, content, deadline } = req.body;
+        
+        const data = {
+            title, content, deadline, userId
+        }
 
-        const task = await Task.create({
-            title: title.trim(),
-            content: content || null,
-            deadline: deadline || null,
-            userId,
-            status: 'pending' 
-        })
+        if(deadline && deadline < new Date()){
+            data.status = 'expired'
+        }
+        const task = await Task.create(data);
+
             return res.status(201).json(task);
     } catch (err) {
         console.error(err);
@@ -61,20 +58,17 @@ router.post('/', async (req, res)=>{
 
 
 //обновить задачу (частично)
-router.patch('/:id', async(req, res) => {
+router.patch('/:id', checkTaskOwner, validateTaskPatch, async(req, res) => {
     try {
-        const userId = req.user.id;
-        const id = parseInt(req.params.id, 10);
-        const task = await Task.findByPk(id);
-        const fields = req.body;
-        if(!task) return res.status(404).json({message: 'Task not found'});
-        if(task.userId !== userId) return res.status(403).json({message: 'Нет доступа'});
-        if(!Object.keys(fields).length) return res.status(400).json({ message: "No fields to update" });
+        const task = req.task;
+        const fields = req.validatedData;
         
+        task.set(fields);
 
-         task.set(fields);
+        if(task.deadline && task.deadline < new Date()){
+            task.status = 'expired';
+        }
        
-
         await task.save();
         return res.json(task);
 
@@ -86,37 +80,30 @@ router.patch('/:id', async(req, res) => {
 
 
 //обновить задачу (полностью)
-router.put('/:id', async(req, res) => {
-    try {
-        const userId = req.user.id;
-        const id = parseInt(req.params.id, 10);
-        const task = await Task.findByPk(id);
-        if(!task) return res.status(404).json({message: 'Task not found'});
-        if(task.userId !== userId) return res.status(403).json({message: 'Нет доступа'});
+// router.put('/:id', checkTaskOwner, async(req, res) => {
+//     try {
+//         const task = req.task;
+       
+//         const {title, content, status, deadline } = req.body;
+//         if(title !== undefined) task.title = title;
+//         if(content !== undefined) task.content = content;
+//         if(status !== undefined) task.status = status;
+//         if(deadline !== undefined) task.deadline = deadline;
 
-        const {title, content, status, deadline } = req.body;
-        if(title !== undefined) task.title = title;
-        if(content !== undefined) task.content = content;
-         if(status !== undefined) task.status = status;
-        if(deadline !== undefined) task.deadline = deadline;
+//         await task.save();
+//         return res.json(task);
 
-        await task.save();
-        return res.json(task);
+//     } catch (err) {
+//         return res.status(500).json({message: 'Ошибка обновления задачи'});
+//     }
+// });
 
-    } catch (err) {
-        return res.status(500).json({message: 'Ошибка обновления задачи'});
-    }
-});
 
 //удалить задачу
-router.delete('/:id', async(req,res) => {
+router.delete('/:id', checkTaskOwner, async(req,res) => {
     try {
-         const userId = req.user.id;
-        const id = parseInt(req.params.id, 10);
-        const task = await Task.findByPk(id);
-        if(!task) return res.status(404).json({message: 'Task not found'});
-        if(task.userId !== userId) return res.status(403).json({message: 'Нет доступа'});
-
+        const task = await req.task;
+       
         await task.destroy();
         return res.json({message: 'Удалено'});
 

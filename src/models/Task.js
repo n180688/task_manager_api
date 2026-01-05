@@ -8,17 +8,26 @@ const Task = sequelize.define('task', {
 		autoIncrement: true
 	},
 	title: {
-		type: DataTypes.STRING,
+		type: DataTypes.STRING(255),
 		allowNull: false,
+		validate: {
+			notEmpty: {
+				msg: "Title cannot be empty"
+			},
+			len: {
+				args: [1, 255],
+				msg: 'Title length must be between 1 and 255 characters'
+			}
+		}
 	},
 	content: {
 		type: DataTypes.TEXT,
 		allowNull: true
 	},
     status: {
-		type: DataTypes.ENUM('pending', 'done', 'expired', 'deleted'),
+		type: DataTypes.ENUM('in_progress', 'done', 'expired'),
 		allowNull: false, 
-		defaultValue: 'pending' 
+		defaultValue: 'in_progress' 
 	},
 	deadline: {
 		type: DataTypes.DATE,
