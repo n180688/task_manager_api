@@ -86,6 +86,8 @@ async function login(req, res){
             ip: req.ip
         });
 
+
+        //куки для браузера
         res.cookie("refresh", refresh, {
             httpOnly: true,
             secure: false,
@@ -93,7 +95,8 @@ async function login(req, res){
             maxAge: 30*60*60*24*1000
         });
 
-        return res.json({message: 'Успех', access});
+        //возвращает пару токенов (на мобилку)
+        return res.json({message: 'Успех', access, refresh});
 
     } catch(err) {
         console.log(err);
@@ -103,14 +106,17 @@ async function login(req, res){
 
 //обновление access токена по refresh:
 async function refresh(req, res){
-    const refresh = req.cookies.refresh;
+    const refresh = req.cookies?.refresh || req.body?.refresh;
+
     if(!refresh) return res.status(401).json({ message: "No refresh token" });
 
     const refreshHash = hashToken(refresh);
 
 
     const session = await Session.findOne({where: { refreshToken: refreshHash }});
+    
     if(!session){
+
         res.clearCookie('refresh');
         return res.status(403).json({ message: "Session not found" });
     }
@@ -137,14 +143,17 @@ async function refresh(req, res){
     } catch (err) {
         console.log(err);
         await session.destroy();
+
         res.clearCookie('refresh');
+
         return res.status(401).json({message: "Refresh expired"});
     }
 }
 
 
 async function logout(req,res){
-    const refreshToken = req.cookies.refresh;
+    const refreshToken = req.cookies?.refresh || req.body?.refresh;
+
     if(!refreshToken){
         return res.sendStatus(204);
     }
@@ -152,7 +161,10 @@ async function logout(req,res){
     const refreshHash = hashToken(refreshToken);
     await Session.destroy({where: {refreshToken: refreshHash}});
 
+
     res.clearCookie('refresh');
+
+    
     return res.sendStatus(204);
 }
 

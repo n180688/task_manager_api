@@ -9,7 +9,7 @@ const Task = sequelize.define('task', {
 	},
 	title: {
 		type: DataTypes.STRING(255),
-		allowNull: false,
+		allowNull: false, 
 		validate: {
 			notEmpty: {
 				msg: "Title cannot be empty"

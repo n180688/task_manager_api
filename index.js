@@ -22,7 +22,7 @@ app.use(express.urlencoded( { extended: true } ));
 app.use(express.static('./src/public'));
 
 
-app.use('/api/users', userRoutes); 
+app.use('/api/users', auth, userRoutes); 
 app.use('/api/tasks', auth, taskRoutes);
 app.use('/api/auth', authRoutes);
 

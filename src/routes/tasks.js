@@ -65,7 +65,9 @@ router.patch('/:id', checkTaskOwner, validateTaskPatch, async(req, res) => {
         
         task.set(fields);
 
-        if(task.deadline && task.deadline < new Date()){
+        if(task.deadline && 
+            task.deadline < new Date() && 
+            task.status !== 'done'){
             task.status = 'expired';
         }
        
