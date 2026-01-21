@@ -1,7 +1,7 @@
 import { Router } from "express";
 import  User from "../models/User.js";
 import Session from "../models/Session.js";
-import { UniqueConstraintError, ValidationError } from "sequelize";
+import { UniqueConstraintError, ValidationError, Op } from "sequelize";
 
 const router = Router();
 
@@ -80,12 +80,17 @@ router.delete('/sessions/:id', async(req, res)=>{
    }
 });
 
+//сброс всех сессий (кроме текущей)
 router.delete('/sessions', async(req, res)=>{
    try {
         await Session.destroy({
-            where: { userId: req.user.id }
+            where: { 
+                userId: req.user.id,
+                id: {
+                    [Op.ne]: req.user.sessionId
+                }
+             }
         });
-        //добавить sessionId по refresh, чтобы оставить текущую.
         return res.json({ message: 'All sessions removed' });
    } catch (err) {
         return res.status(500).json({ message: 'Failed to delete sessions' })

@@ -63,28 +63,29 @@ async function login(req, res){
             return res.status(400).json({message: 'Неправильный пароль'})
         };
 
-
-        //генерация access 
-         const access = jwt.sign( {
-            id: user.id,
-            username: user.login
-        }, JWT_ACCESS_SECRET, {
-            expiresIn: JWT_ACCESS_EXPIRES
-        });
-
         //refresh
         const refresh = crypto.randomBytes(64).toString('hex');
         const refreshHash = hashToken(refresh);
 
 
-        //создание новой сессии
-        await Session.create({
+         //создание новой сессии
+        const session = await Session.create({
             userId: user.id,
             refreshToken: refreshHash,
             expiresAt: new Date(Date.now() + 30*60*60*24*1000),
             userAgent: req.headers["user-agent"],
             ip: req.ip
         });
+
+
+        //генерация access 
+         const access = jwt.sign( {
+            id: user.id,
+            sessionId: session.id
+        }, JWT_ACCESS_SECRET, {
+            expiresIn: JWT_ACCESS_EXPIRES
+        });
+
 
 
         //куки для браузера
@@ -132,7 +133,7 @@ async function refresh(req, res){
             const newAccess = jwt.sign(
                         {
                     id: session.userId,
-                    username: session.login
+                    sessionId: session.id
                 }, JWT_ACCESS_SECRET, {
                     expiresIn: JWT_ACCESS_EXPIRES
                 }
