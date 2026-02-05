@@ -6,7 +6,8 @@ import './src/models/index.js';
 import userRoutes from './src/routes/users.js';
 import taskRoutes from './src/routes/tasks.js';
 import authRoutes from './src/routes/auth.js';
-import { auth } from './src/middlewares/auth.js'
+import categoryRoutes from './src/routes/categories.js';
+import { auth } from './src/middlewares/auth.js';
 
 const { DOMAIN, PORT } = process.env;
 const HOST = `${DOMAIN}:${PORT}`;
@@ -24,6 +25,7 @@ app.use(express.static('./src/public'));
 
 app.use('/api/users', auth, userRoutes); 
 app.use('/api/tasks', auth, taskRoutes);
+app.use('/api/categories', auth, categoryRoutes);
 app.use('/api/auth', authRoutes);
 
 

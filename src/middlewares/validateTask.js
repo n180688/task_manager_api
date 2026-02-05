@@ -2,7 +2,7 @@ const TASK_STATUSES = ['in_progress', 'done'];
 
 
 function validateTaskCreate(req, res, next){
-    const { title, content, deadline } = req.body;
+    const { title, content, deadline, categoryId } = req.body;
 
     if(typeof title !== 'string' ){
         return res.status(400).json({ message: 'Title is required' });
@@ -36,10 +36,18 @@ function validateTaskCreate(req, res, next){
     normalizedDeadline = date;
     }
 
+    if(categoryId === undefined) {
+      return res.status(400).json({ message: 'Category required' })
+    }
+    if(Number.isNaN(categoryId)){
+      return res.status(400).json({ message: 'Invalid categoryId' })
+    }
+
     req.body = { 
             title: trimmedTitle,
             content: normalizedContent,
-            deadline: normalizedDeadline
+            deadline: normalizedDeadline,
+            categoryId: Number(categoryId)
         };
 
     next();
@@ -47,7 +55,7 @@ function validateTaskCreate(req, res, next){
 
 
 function validateTaskPatch(req, res, next) {
-  const { title, content, deadline, status } = req.body;
+  const { title, content, deadline, status, categoryId } = req.body;
   const normalized = {};
 
   // title
@@ -101,6 +109,16 @@ function validateTaskPatch(req, res, next) {
 
     normalized.status = status;
   }
+
+  //categoryId
+  if(categoryId !== undefined){
+    if(Number.isNaN(categoryId)){
+      return res.status(400).json({ message: 'Invalid categoryId' })
+    }
+    normalized.categoryId = categoryId;
+  }
+
+  
 
   if (Object.keys(normalized).length === 0) {
     return res.status(400).json({ message: 'No fields to update' });

@@ -1,5 +1,6 @@
 import User from "../models/User.js";
 import Session from "../models/Session.js";
+import Category from "../models/Category.js";
 import bcrypt from "bcrypt";
 import jwt from 'jsonwebtoken';
 import crypto from 'crypto';
@@ -20,6 +21,13 @@ async function register(req, res){
         const hash = await bcrypt.hash(password, 10);
 
         const user = await User.create({login, password: hash});
+
+        //создание стартовых категорий для пользователя
+        await Category.bulkCreate([
+            { name: 'Входящие', userId: user.id, isSystem: true },
+            { name: 'Работа', userId: user.id },
+            { name: 'Личное', userId: user.id }
+        ]);
 
         return res.status(201).json({
             message: 'Юзер создан',

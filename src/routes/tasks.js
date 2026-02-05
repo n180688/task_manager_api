@@ -2,7 +2,7 @@ import { Router } from "express";
 import  Task  from "../models/Task.js";
 import { checkTaskOwner } from "../middlewares/checkTaskOwner.js";
 import { validateTaskCreate, validateTaskPatch } from "../middlewares/validateTask.js";
-
+import { checkCategoryAccess } from "../middlewares/checkCategoryAccess.js";
 
 const router = Router();
 
@@ -34,13 +34,13 @@ router.get('/:id', checkTaskOwner, async(req, res)=>{
 
 
 //создание нового 
-router.post('/', validateTaskCreate, async (req, res)=>{
+router.post('/', validateTaskCreate, checkCategoryAccess, async (req, res)=>{
     try {
         const userId = req.user.id;
-        const {title, content, deadline } = req.body;
+        const {title, content, deadline, categoryId } = req.body;
         
         const data = {
-            title, content, deadline, userId
+            title, content, deadline, userId, categoryId
         }
 
         if(deadline && deadline < new Date()){
@@ -58,7 +58,7 @@ router.post('/', validateTaskCreate, async (req, res)=>{
 
 
 //обновить задачу (частично)
-router.patch('/:id', checkTaskOwner, validateTaskPatch, async(req, res) => {
+router.patch('/:id', checkTaskOwner, validateTaskPatch, checkCategoryAccess, async(req, res) => {
     try {
         const task = req.task;
         const fields = req.validatedData;

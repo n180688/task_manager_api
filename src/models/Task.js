@@ -36,6 +36,10 @@ const Task = sequelize.define('task', {
 	userId: {
 		type: DataTypes.INTEGER,
 		allowNull: false,
+	},
+	categoryId: {
+		type: DataTypes.INTEGER,
+		allowNull: false,
 	}
 });
 

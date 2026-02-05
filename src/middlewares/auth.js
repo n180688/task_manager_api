@@ -24,7 +24,7 @@ async function auth(req, res, next){
 
         next();
     } catch(err){
-        return res.status(401).json({ message : 'Access истек' });
+        return res.status(401).json({ message : 'Auth failed' });
     }
 }
 
