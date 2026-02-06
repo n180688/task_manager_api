@@ -4,6 +4,10 @@ async function checkCategoryAccess(req, res, next){
 
     const { categoryId } = req.body;
 
+    if (categoryId === undefined) {
+        return next()
+    }
+
     const category = await Category.findOne({
         where: {
             id: categoryId,
